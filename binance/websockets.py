@@ -64,6 +64,7 @@ class BinanceSocketManager(threading.Thread):
 
     STREAM_URL = 'wss://stream.binance.com:9443/'
     FSTREAM_URL = 'wss://fstream.binance.com/'
+    DSTREAM_URL = 'wss://dstream.binance.com/'
 
     WEBSOCKET_DEPTH_5 = '5'
     WEBSOCKET_DEPTH_10 = '10'
@@ -119,6 +120,21 @@ class BinanceSocketManager(threading.Thread):
 
         self._conns[path] = connectWS(factory, context_factory)
         return path
+
+    def _start_coin_futures_socket(self, path, callback, prefix='stream?streams='):
+        if path in self._conns:
+            return False
+
+        factory_url = self.DSTREAM_URL + prefix + path
+        factory = BinanceClientFactory(factory_url)
+        factory.protocol = BinanceClientProtocol
+        factory.callback = callback
+        factory.reconnect = True
+        context_factory = ssl.ClientContextFactory()
+
+        self._conns[path] = connectWS(factory, context_factory)
+        return path
+
 
     def start_depth_socket(self, symbol, callback, depth=None, interval=None):
         """Start a websocket for symbol market depth returning either a diff or a partial book
@@ -529,7 +545,30 @@ class BinanceSocketManager(threading.Thread):
             ]
         """
         return self._start_futures_socket(symbol.lower() + '@bookTicker', callback)
-    
+
+    def start_symbol_ticker_coin_futures_socket(self, symbol, callback):
+        """Start a websocket for a symbol's ticker data
+        By default all markets are included in an array.
+        https://binance-docs.github.io/apidocs/futures/en/#individual-symbol-book-ticker-streams
+        :param symbol: required
+        :type symbol: str
+        :param callback: callback function to handle messages
+        :type callback: function
+        :returns: connection key string if successful, False otherwise
+        .. code-block:: python
+            [
+                {
+                  "u":400900217,     // order book updateId
+                  "s":"BNBUSDT",     // symbol
+                  "b":"25.35190000", // best bid price
+                  "B":"31.21000000", // best bid qty
+                  "a":"25.36520000", // best ask price
+                  "A":"40.66000000"  // best ask qty
+                }
+            ]
+        """
+        return self._start_coin_futures_socket(symbol.lower() + '@bookTicker', callback)
+
     def start_individual_symbol_ticker_futures_socket(self, symbol, callback):
         """Start a futures websocket for a single symbol's ticker data
         https://binance-docs.github.io/apidocs/futures/en/#individual-symbol-ticker-streams
