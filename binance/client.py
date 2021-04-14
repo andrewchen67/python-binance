@@ -3755,7 +3755,7 @@ class Client(object):
         :raises: BinanceRequestException, BinanceAPIException
 
         """
-        res = self._request_margin_api('post', 'listenKey', signed=False, data={})
+        res = self._request_margin_api('post', 'userDataStream', signed=False, data={})
         return res['listenKey']
 
     def coin_future_stream_get_listen_key(self):
@@ -3778,7 +3778,7 @@ class Client(object):
         :raises: BinanceRequestException, BinanceAPIException
 
         """
-        res = self._request_futures_coin_api('post', 'userDataStream', signed=False, data={})
+        res = self._request_futures_coin_api('post', 'listenKey', signed=False, data={})
         return res['listenKey']
 
     def margin_stream_keepalive(self, listenKey):
