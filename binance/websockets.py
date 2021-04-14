@@ -737,6 +737,23 @@ class BinanceSocketManager(threading.Thread):
         # and start the socket with this specific kek
         return self._start_account_socket(symbol, isolated_margin_listen_key, callback)
 
+    def start_coin_future_user_socket(self, callback):
+        """Start a websocket for cross-margin data
+
+        https://binance-docs.github.io/apidocs/spot/en/#listen-key-margin
+
+        :param callback: callback function to handle messages
+        :type callback: function
+
+        :returns: connection key string if successful, False otherwise
+
+        Message Format - see Binance API docs for all types
+        """
+        # Get the user margin listen key
+        margin_listen_key = self._client.coin_future_stream_get_listen_key()
+        # and start the socket with this specific key
+        return self._start_account_socket('margin', margin_listen_key, callback)
+
     def _start_account_socket(self, socket_type, listen_key, callback):
         """Starts one of user or margin socket"""
         self._check_account_socket_open(listen_key)
